@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Crafter</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at top left, #0d0d0d, #1a1a2e, #000000);
+            color: white;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://images.unsplash.com/photo-1677444201196-bfa4a4ef7c7b');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+        }
+        .overlay {
+            background: rgba(0, 0, 0, 0.7);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            width: 95%;
+            max-width: 800px;
+            margin: auto;
+            background: rgba(20, 20, 40, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 0px 25px rgba(0, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            background: linear-gradient(270deg, #00f5ff, #00ff95, #00f5ff);
+            background-size: 600% 600%;
+            animation: gradientShift 5s ease infinite;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            font-size: 2rem;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            border-radius: 10px;
+            padding: 10px;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            resize: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        label {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+        input[type="number"], input[type="range"] {
+            width: 100%;
+            margin-top: 5px;
+        }
+        .slider {
+            accent-color: #00f5ff;
+        }
+        button {
+            background: linear-gradient(90deg, #00f5ff, #00ff95);
+            color: black;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 12px;
+            margin-top: 20px;
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0px 0px 10px rgba(0,255,255,0.4);
+        }
+        button:hover {
+            background: linear-gradient(90deg, #00ff95, #00f5ff);
+            transform: scale(1.05);
+            box-shadow: 0px 0px 20px rgba(0,255,255,0.6);
+        }
+        .response-box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            min-height: 150px;
+            max-height: 400px; /* Allow large text */
+            overflow-y: auto; /* Scroll if text overflows */
+            text-align: left;
+            font-size: 1rem;
+            box-shadow: inset 0px 0px 10px rgba(0, 255, 255, 0.2);
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay">
+        <div class="container">
+            <h1>🤖 AI Prompt Crafter</h1>
+            <textarea id="query" placeholder="Enter your question..."></textarea>
+
+            <label>Max Tokens</label>
+            <input type="number" id="max_tokens" value="300">
+
+            <label>Temperature: <span id="temperature_value">0.7</span></label>
+            <input type="range" class="slider" id="temperature" min="0" max="1" step="0.1" value="0.7" 
+                oninput="document.getElementById('temperature_value').innerText = this.value">
+
+            <label>Top P: <span id="top_p_value">1</span></label>
+            <input type="range" class="slider" id="top_p" min="0" max="1" step="0.1" value="1" 
+                oninput="document.getElementById('top_p_value').innerText = this.value">
+
+            <label>Frequency Penalty: <span id="frequency_penalty_value">0</span></label>
+            <input type="range" class="slider" id="frequency_penalty" min="0" max="2" step="0.1" value="0" 
+                oninput="document.getElementById('frequency_penalty_value').innerText = this.value">
+
+            <label>Presence Penalty: <span id="presence_penalty_value">0</span></label>
+            <input type="range" class="slider" id="presence_penalty" min="0" max="2" step="0.1" value="0" 
+                oninput="document.getElementById('presence_penalty_value').innerText = this.value">
+
+            <button onclick="sendQuery()">🚀 Submit</button>
+
+            <div class="response-box" id="response">Response will appear here...</div>
+        </div>
+    </div>
+
+    <script>
+        async function sendQuery() {
+            const query = document.getElementById("query").value;
+            const max_tokens = document.getElementById("max_tokens").value;
+            const temperature = document.getElementById("temperature").value;
+            const top_p = document.getElementById("top_p").value;
+            const frequency_penalty = document.getElementById("frequency_penalty").value;
+            const presence_penalty = document.getElementById("presence_penalty").value;
+
+            document.getElementById("response").innerText = "Thinking...";
+
+            const res = await fetch("/rag", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    query,
+                    max_tokens,
+                    temperature,
+                    top_p,
+                    frequency_penalty,
+                    presence_penalty
+                })
+            });
+
+            const data = await res.json();
+            const text = data.response || data.error;
+
+            typeText(text, "response");
+        }
+
+        function typeText(text, elementId) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = "";
+            let i = 0;
+
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    let delay = 20; // base speed
+                    if (",.!?".includes(text.charAt(i))) delay = 100; // pause at punctuation
+                    i++;
+                    setTimeout(type, delay);
+                }
+            }
+            type();
+        }
+    </script>
+</body>
+</html>
